@@ -8,6 +8,7 @@ public class Player : AriaBehaviour
 
     public Vector3 playerOffset;
     public float maxOffsetMagnitude;
+    public float offsetMagnitudeThreshold;
 
     Camera cam;
     // Used by MoveCamera() every frame.
@@ -40,10 +41,15 @@ public class Player : AriaBehaviour
                 StartCoroutine(HandleClick());
             }
 
-        if (playerOffset.magnitude > maxOffsetMagnitude)
+        if (playerOffset.magnitude > offsetMagnitudeThreshold)
         {
             this.transform.rotation = Quaternion.LookRotation(playerOffset, Vector3.up);
-            this.transform.position += this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * 5f;
+            Vector3 moveDist = this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * 5f;
+            this.transform.position += moveDist;
+            playerOffset -= moveDist;
+        }
+        if (playerOffset.magnitude > maxOffsetMagnitude)
+        {
             playerOffset = playerOffset.normalized * maxOffsetMagnitude;
         }
 
