@@ -4,12 +4,14 @@ using System.Collections;
 public class Player : AriaBehaviour
 {
     public float cameraAngle;
+    public float maxCameraAngle;
     public float cameraDistance;
 
     public Vector3 playerOffset;
     public float maxOffsetMagnitude;
     public float offsetMagnitudeThreshold;
 
+    #region Camera stuff.
     Camera cam;
     // Used by MoveCamera() every frame.
     Vector3 targetCameraPosition;
@@ -18,36 +20,78 @@ public class Player : AriaBehaviour
     Vector3 relativeCameraPosition;
     float relativeCameraXZMagnitude;
     Vector3 relativeTargetCameraPosition;
+    #endregion
 
-    bool handlingInput = false;
+    #region Input stuff.
+#if UNITY_EDITOR
+    Vector2 currentMousePosition, lastMousePosition, deltaMousePosition;
+#endif
 
-	void Start ()
+#if (UNITY_IPHONE || UNITY_ANDROID)
+    Touch touch;
+#endif
+    #endregion
+
+    #region Animation stuff.
+    Animator animator;
+    float animatorMoveSpeed;
+    #endregion
+    void Start ()
     {
         cam = Camera.main;
+        animator = this.GetComponent<Animator>();
 	}
 	
 	void Update ()
     {
-        if(!handlingInput)
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-            {
-                handlingInput = true;
-                StartCoroutine(HandleTouch());
-            }
-            else if (Input.GetMouseButtonDown(0))
-            {
-                handlingInput = true;
-                Debug.Log("Click!");
-                StartCoroutine(HandleClick());
-            }
+        #region Input stuff.
+#if UNITY_EDITOR
+        if (Input.GetMouseButtonDown(0))
+        {
+            currentMousePosition = lastMousePosition = Input.mousePosition;
+            deltaMousePosition = Vector2.zero;
+        }
+        if (Input.GetMouseButton(0))
+        {
+            Debug.Log("<b>Current Mouse Position:</b> " + currentMousePosition + ". <b>Last Mouse Position:</b> " + currentMousePosition + ".");
+            currentMousePosition = Input.mousePosition;
+            deltaMousePosition = currentMousePosition - lastMousePosition;
+            lastMousePosition = currentMousePosition;
 
+            Vector3 cameraRelativeDeltaPosition = screenXY2CameraXZ(deltaMousePosition);
+            playerOffset.x = playerOffset.x - cameraRelativeDeltaPosition.x;
+            playerOffset.z = playerOffset.z - cameraRelativeDeltaPosition.z;
+        }
+#endif
+
+#if (UNITY_IPHONE || UNITY_ANDROID)
+        if (Input.touchCount > 0)
+        {
+            touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Moved)
+            {
+                Vector3 cameraRelativeDeltaPosition = screenXY2CameraXZ(touch.deltaPosition);
+                playerOffset.x = playerOffset.x - cameraRelativeDeltaPosition.x;
+                playerOffset.z = playerOffset.z - cameraRelativeDeltaPosition.z;
+            }
+        }
+#endif
+        #endregion
+
+        animatorMoveSpeed = 0;
         if (playerOffset.magnitude > offsetMagnitudeThreshold)
         {
             this.transform.rotation = Quaternion.LookRotation(playerOffset, Vector3.up);
             Vector3 moveDist = this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * 5f;
             this.transform.position += moveDist;
             playerOffset -= moveDist;
+            animatorMoveSpeed = 10f;
         }
+        if(animator != null)
+        {
+            animator.SetFloat("Forward Speed", animatorMoveSpeed);
+        }
+
         if (playerOffset.magnitude > maxOffsetMagnitude)
         {
             playerOffset = playerOffset.normalized * maxOffsetMagnitude;
@@ -56,49 +100,6 @@ public class Player : AriaBehaviour
         UpdateCamera ();
 	}
 
-    IEnumerator HandleClick()
-    {
-        Debug.Log("HandleClick coroutine entered");
-        Vector2 currentMousePosition, lastMousePosition, deltaMousePosition;
-        currentMousePosition = lastMousePosition = Input.mousePosition;
-        deltaMousePosition = Vector2.zero;
-
-        while(Input.GetMouseButtonDown(0) || Input.GetMouseButton(0))
-        {
-            deltaMousePosition = currentMousePosition - lastMousePosition;
-            lastMousePosition = currentMousePosition;
-            
-            Vector3 cameraRelativeDeltaPosition = screenXY2CameraXZ(deltaMousePosition);
-            playerOffset.x = playerOffset.x - cameraRelativeDeltaPosition.x;
-            playerOffset.z = playerOffset.z - cameraRelativeDeltaPosition.z;
-            
-            yield return new WaitForEndOfFrame();
-            currentMousePosition = Input.mousePosition;
-        }
-
-        handlingInput = false;
-        yield return 0;
-    }
-    IEnumerator HandleTouch()
-    {
-        Touch touch = Input.GetTouch(0);
-
-        while (touch.phase != TouchPhase.Ended && touch.phase != TouchPhase.Canceled)
-        {
-            if(touch.phase == TouchPhase.Moved)
-            {
-                Vector3 cameraRelativeDeltaPosition = screenXY2CameraXZ(touch.deltaPosition);
-                playerOffset.x = playerOffset.x - cameraRelativeDeltaPosition.x;
-                playerOffset.z = playerOffset.z - cameraRelativeDeltaPosition.z;
-            }
-
-            yield return new WaitForEndOfFrame();
-            touch = Input.GetTouch(0);
-        }
-
-        handlingInput = false;
-        yield return 0;
-    }
     Vector3 screenXY2CameraXZ(Vector2 touchDeltaPos)
     {
         Vector3 cameraXZ = Vector3.zero;
@@ -106,7 +107,6 @@ public class Player : AriaBehaviour
 
         Vector3 camRight = cam.transform.TransformDirection(Vector3.right);
         Vector3 camForward = new Vector3(-camRight.z, 0, camRight.x);
-        Debug.Log(camForward);
 
         cameraXZ += touchDeltaPos.x * camRight;
         cameraXZ += touchDeltaPos.y * camForward;
