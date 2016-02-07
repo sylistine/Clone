@@ -4,14 +4,20 @@ using System.Collections;
 public class Player : AriaBehaviour
 {
     public float cameraAngle;
+    public float minCameraAngle;
     public float maxCameraAngle;
+    public float currentCameraAngle;
+    private float cameraAngleDampVelocity;
     public float cameraDistance;
 
     private Vector3 lookOffset;
-    public float lookOffsetMoveThreshold;
+    public float lookOffsetWalkThreshold;
+    public float lookOffsetRunThreshold;
     public float maxLookOffsetMagnitude;
 
-    public float playerMoveSpeed;
+    public float playerWalkSpeed;
+    public float playerRunSpeed;
+    private bool dashing = false;
 
     #region Camera stuff.
     Camera cam;
@@ -25,12 +31,9 @@ public class Player : AriaBehaviour
     #endregion
 
     #region Input stuff.
+    private bool preventCameraAutoAdjust;
 #if UNITY_EDITOR
     Vector2 currentMousePosition, lastMousePosition, deltaMousePosition;
-#endif
-
-#if (UNITY_IPHONE || UNITY_ANDROID)
-    Touch touch;
 #endif
     #endregion
 
@@ -43,13 +46,17 @@ public class Player : AriaBehaviour
     {
         cam = Camera.main;
         animator = this.GetComponentInChildren<Animator>();
-
+        
         if (maxCameraAngle < cameraAngle) maxCameraAngle = cameraAngle;
-	}
+        if (minCameraAngle > cameraAngle) minCameraAngle = cameraAngle;
+        currentCameraAngle = cameraAngle;
+    }
 	
 	void Update ()
     {
-        #region Input stuff.
+        preventCameraAutoAdjust = false;
+
+        #region PC Input
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
@@ -67,29 +74,70 @@ public class Player : AriaBehaviour
             lookOffset.z = lookOffset.z - cameraRelativeDeltaPosition.z;
         }
 #endif
+        #endregion
 
+        #region Mobile Input
 #if (UNITY_IPHONE || UNITY_ANDROID)
         if (Input.touchCount > 0)
         {
-            touch = Input.GetTouch(0);
+
+            Touch touch = Input.GetTouch(0);
             if (touch.phase == TouchPhase.Moved)
             {
                 Vector3 cameraRelativeDeltaPosition = screenXY2CameraXZ(touch.deltaPosition);
                 lookOffset.x = lookOffset.x - cameraRelativeDeltaPosition.x;
                 lookOffset.z = lookOffset.z - cameraRelativeDeltaPosition.z;
             }
+
+            if(Input.touchCount > 1)
+            {
+                preventCameraAutoAdjust = true;
+                Touch camTouch = Input.GetTouch(1);
+                if (camTouch.phase == TouchPhase.Moved)
+                {
+                    Vector3 relativeCameraPosition = cam.transform.position - this.transform.position;
+                    Vector3 relativeCameraXZ = new Vector3(relativeCameraPosition.x, 0, relativeCameraPosition.z);
+                    float relativeCameraXZMagnitude = relativeCameraXZ.magnitude;
+                    float relativeCameraYaw = Mathf.Atan2(relativeCameraPosition.x, relativeCameraPosition.z) * Mathf.Rad2Deg;
+
+                    relativeCameraYaw -= camTouch.deltaPosition.x * 0.75f;
+                    relativeCameraPosition.x = Mathf.Sin(relativeCameraYaw * Mathf.Deg2Rad) * relativeCameraXZMagnitude;
+                    relativeCameraPosition.z = Mathf.Cos(relativeCameraYaw * Mathf.Deg2Rad) * relativeCameraXZMagnitude;
+
+                    if ((camTouch.deltaPosition.y > 0 && currentCameraAngle < maxCameraAngle) ||
+                        (camTouch.deltaPosition.y < 0 && currentCameraAngle > minCameraAngle))
+                    {
+                        currentCameraAngle += camTouch.deltaPosition.y * 0.75f;
+                    }
+                    cam.transform.position = relativeCameraPosition + this.transform.position;
+                }
+            }
         }
 #endif
         #endregion
 
-        animatorMoveSpeed = 0;
-        if (lookOffset.magnitude > lookOffsetMoveThreshold)
+        if(!preventCameraAutoAdjust && Mathf.Abs(currentCameraAngle - cameraAngle) > 0.01f)
         {
+            currentCameraAngle = Mathf.SmoothDamp(currentCameraAngle, cameraAngle, ref cameraAngleDampVelocity, 0.5f);
+        }
+
+        animatorMoveSpeed = 0;
+        float lookOffsetMagnitude = lookOffset.magnitude;
+        float moveSpeed;
+
+        if (lookOffsetMagnitude > lookOffsetWalkThreshold)
+        {
+            if (lookOffsetMagnitude > lookOffsetRunThreshold) dashing = true;
+            moveSpeed = (dashing || lookOffsetMagnitude > lookOffsetRunThreshold) ? playerRunSpeed : playerWalkSpeed;
             this.transform.rotation = Quaternion.LookRotation(lookOffset, Vector3.up);
-            Vector3 moveDist = this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * playerMoveSpeed;
+            Vector3 moveDist = this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * moveSpeed;
             this.transform.position += moveDist;
             lookOffset -= moveDist;
-            animatorMoveSpeed = 10f;
+            animatorMoveSpeed = moveSpeed;
+        }
+        else
+        {
+            dashing = false;
         }
         if(animator != null)
         {
@@ -125,7 +173,8 @@ public class Player : AriaBehaviour
         float currentCameraPitch = Mathf.Atan2(relativeCameraPosition.y, currentCameraXZ.magnitude) * Mathf.Rad2Deg;
         Vector3 targetCameraPosition = TargetCameraPosition();
 
-        while (currentCameraPitch > maxCameraAngle)
+        // while (currentCameraPitch > maxCameraAngle)
+        while (false)
         {
             cam.transform.position = Vector3.SmoothDamp(cam.transform.position, targetCameraPosition, ref cameraVelocity, 0.5f);
             relativeCameraPosition = cam.transform.position - (this.transform.position + lookOffset);
@@ -146,7 +195,7 @@ public class Player : AriaBehaviour
         // Create new relative target camera position with this data.
         relativeTargetCameraPosition = new Vector3(
             relativeCameraPosition.x,
-            Mathf.Tan(Mathf.Deg2Rad * cameraAngle) * relativeCameraXZMagnitude,
+            Mathf.Tan(Mathf.Deg2Rad * currentCameraAngle) * relativeCameraXZMagnitude,
             relativeCameraPosition.z);
         // Scale to desired zoom level.
         relativeTargetCameraPosition = relativeTargetCameraPosition.normalized * cameraDistance;
