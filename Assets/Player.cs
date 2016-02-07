@@ -7,9 +7,9 @@ public class Player : AriaBehaviour
     public float maxCameraAngle;
     public float cameraDistance;
 
-    private Vector3 playerOffset;
+    private Vector3 lookOffset;
     public float lookOffsetMoveThreshold;
-    public float maxLookOffsetDistance;
+    public float maxLookOffsetMagnitude;
 
     public float playerMoveSpeed;
 
@@ -38,10 +38,11 @@ public class Player : AriaBehaviour
     Animator animator;
     float animatorMoveSpeed;
     #endregion
+
     void Start ()
     {
         cam = Camera.main;
-        animator = this.GetComponent<Animator>();
+        animator = this.GetComponentInChildren<Animator>();
 
         if (maxCameraAngle < cameraAngle) maxCameraAngle = cameraAngle;
 	}
@@ -57,14 +58,13 @@ public class Player : AriaBehaviour
         }
         if (Input.GetMouseButton(0))
         {
-            Debug.Log("<b>Current Mouse Position:</b> " + currentMousePosition + ". <b>Last Mouse Position:</b> " + currentMousePosition + ".");
             currentMousePosition = Input.mousePosition;
             deltaMousePosition = currentMousePosition - lastMousePosition;
             lastMousePosition = currentMousePosition;
 
             Vector3 cameraRelativeDeltaPosition = screenXY2CameraXZ(deltaMousePosition);
-            playerOffset.x = playerOffset.x - cameraRelativeDeltaPosition.x;
-            playerOffset.z = playerOffset.z - cameraRelativeDeltaPosition.z;
+            lookOffset.x = lookOffset.x - cameraRelativeDeltaPosition.x;
+            lookOffset.z = lookOffset.z - cameraRelativeDeltaPosition.z;
         }
 #endif
 
@@ -75,20 +75,20 @@ public class Player : AriaBehaviour
             if (touch.phase == TouchPhase.Moved)
             {
                 Vector3 cameraRelativeDeltaPosition = screenXY2CameraXZ(touch.deltaPosition);
-                playerOffset.x = playerOffset.x - cameraRelativeDeltaPosition.x;
-                playerOffset.z = playerOffset.z - cameraRelativeDeltaPosition.z;
+                lookOffset.x = lookOffset.x - cameraRelativeDeltaPosition.x;
+                lookOffset.z = lookOffset.z - cameraRelativeDeltaPosition.z;
             }
         }
 #endif
         #endregion
 
         animatorMoveSpeed = 0;
-        if (playerOffset.magnitude > lookOffsetMoveThreshold)
+        if (lookOffset.magnitude > lookOffsetMoveThreshold)
         {
-            this.transform.rotation = Quaternion.LookRotation(playerOffset, Vector3.up);
+            this.transform.rotation = Quaternion.LookRotation(lookOffset, Vector3.up);
             Vector3 moveDist = this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * playerMoveSpeed;
             this.transform.position += moveDist;
-            playerOffset -= moveDist;
+            lookOffset -= moveDist;
             animatorMoveSpeed = 10f;
         }
         if(animator != null)
@@ -96,9 +96,9 @@ public class Player : AriaBehaviour
             animator.SetFloat("Forward Speed", animatorMoveSpeed);
         }
 
-        if (playerOffset.magnitude > maxLookOffsetDistance)
+        if (lookOffset.magnitude > maxLookOffsetMagnitude)
         {
-            playerOffset = playerOffset.normalized * maxLookOffsetDistance;
+            lookOffset = lookOffset.normalized * maxLookOffsetMagnitude;
         }
 
         UpdateCamera ();
@@ -120,25 +120,26 @@ public class Player : AriaBehaviour
 
     void UpdateCamera ()
     {
-        Vector3 relativeCameraPosition = cam.transform.position - (this.transform.position + playerOffset);
+        Vector3 relativeCameraPosition = cam.transform.position - (this.transform.position + lookOffset);
         Vector3 currentCameraXZ = new Vector3(relativeCameraPosition.x, 0, relativeCameraPosition.z);
         float currentCameraPitch = Mathf.Atan2(relativeCameraPosition.y, currentCameraXZ.magnitude) * Mathf.Rad2Deg;
+        Vector3 targetCameraPosition = TargetCameraPosition();
 
         while (currentCameraPitch > maxCameraAngle)
         {
-            cam.transform.position = Vector3.SmoothDamp(cam.transform.position, TargetCameraPosition(), ref cameraVelocity, 0.5f);
-            relativeCameraPosition = cam.transform.position - (this.transform.position + playerOffset);
+            cam.transform.position = Vector3.SmoothDamp(cam.transform.position, targetCameraPosition, ref cameraVelocity, 0.5f);
+            relativeCameraPosition = cam.transform.position - (this.transform.position + lookOffset);
             currentCameraXZ = new Vector3(relativeCameraPosition.x, 0, relativeCameraPosition.z);
             currentCameraPitch = Mathf.Atan2(relativeCameraPosition.y, currentCameraXZ.magnitude) * Mathf.Rad2Deg;
         }
-        cam.transform.position = Vector3.SmoothDamp(cam.transform.position, TargetCameraPosition(), ref cameraVelocity, 0.5f);
-        cam.transform.LookAt(this.transform.position + playerOffset);
+        cam.transform.position = Vector3.SmoothDamp(cam.transform.position, targetCameraPosition, ref cameraVelocity, 0.5f);
+        cam.transform.LookAt(this.transform.position + lookOffset);
     }
 
     Vector3 TargetCameraPosition ()
     {
         // Get player-relative x and z camera position and the magnitude of that vector.
-        relativeCameraPosition = cam.transform.position - (this.transform.position + playerOffset);
+        relativeCameraPosition = cam.transform.position - (this.transform.position + lookOffset);
         relativeCameraPosition.y = 0;
         relativeCameraXZMagnitude = relativeCameraPosition.magnitude;
 
@@ -150,12 +151,12 @@ public class Player : AriaBehaviour
         // Scale to desired zoom level.
         relativeTargetCameraPosition = relativeTargetCameraPosition.normalized * cameraDistance;
         
-        return this.transform.position + playerOffset + relativeTargetCameraPosition;
+        return this.transform.position + lookOffset + relativeTargetCameraPosition;
     }
 
     void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawSphere(playerOffset + this.transform.position, 1);
+        Gizmos.DrawSphere(lookOffset + this.transform.position, 1);
     }
 }
