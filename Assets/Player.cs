@@ -7,9 +7,11 @@ public class Player : AriaBehaviour
     public float maxCameraAngle;
     public float cameraDistance;
 
-    public Vector3 playerOffset;
-    public float maxOffsetMagnitude;
-    public float offsetMagnitudeThreshold;
+    private Vector3 playerOffset;
+    public float lookOffsetMoveThreshold;
+    public float maxLookOffsetDistance;
+
+    public float playerMoveSpeed;
 
     #region Camera stuff.
     Camera cam;
@@ -40,6 +42,8 @@ public class Player : AriaBehaviour
     {
         cam = Camera.main;
         animator = this.GetComponent<Animator>();
+
+        if (maxCameraAngle < cameraAngle) maxCameraAngle = cameraAngle;
 	}
 	
 	void Update ()
@@ -79,10 +83,10 @@ public class Player : AriaBehaviour
         #endregion
 
         animatorMoveSpeed = 0;
-        if (playerOffset.magnitude > offsetMagnitudeThreshold)
+        if (playerOffset.magnitude > lookOffsetMoveThreshold)
         {
             this.transform.rotation = Quaternion.LookRotation(playerOffset, Vector3.up);
-            Vector3 moveDist = this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * 5f;
+            Vector3 moveDist = this.transform.TransformDirection(Vector3.forward) * Time.deltaTime * playerMoveSpeed;
             this.transform.position += moveDist;
             playerOffset -= moveDist;
             animatorMoveSpeed = 10f;
@@ -92,9 +96,9 @@ public class Player : AriaBehaviour
             animator.SetFloat("Forward Speed", animatorMoveSpeed);
         }
 
-        if (playerOffset.magnitude > maxOffsetMagnitude)
+        if (playerOffset.magnitude > maxLookOffsetDistance)
         {
-            playerOffset = playerOffset.normalized * maxOffsetMagnitude;
+            playerOffset = playerOffset.normalized * maxLookOffsetDistance;
         }
 
         UpdateCamera ();
@@ -116,13 +120,22 @@ public class Player : AriaBehaviour
 
     void UpdateCamera ()
     {
-        targetCameraPosition = CalculateTargetCameraPosition();
+        Vector3 relativeCameraPosition = cam.transform.position - (this.transform.position + playerOffset);
+        Vector3 currentCameraXZ = new Vector3(relativeCameraPosition.x, 0, relativeCameraPosition.z);
+        float currentCameraPitch = Mathf.Atan2(relativeCameraPosition.y, currentCameraXZ.magnitude) * Mathf.Rad2Deg;
 
-        cam.transform.position = Vector3.SmoothDamp(cam.transform.position, targetCameraPosition, ref cameraVelocity, 0.5f);
+        while (currentCameraPitch > maxCameraAngle)
+        {
+            cam.transform.position = Vector3.SmoothDamp(cam.transform.position, TargetCameraPosition(), ref cameraVelocity, 0.5f);
+            relativeCameraPosition = cam.transform.position - (this.transform.position + playerOffset);
+            currentCameraXZ = new Vector3(relativeCameraPosition.x, 0, relativeCameraPosition.z);
+            currentCameraPitch = Mathf.Atan2(relativeCameraPosition.y, currentCameraXZ.magnitude) * Mathf.Rad2Deg;
+        }
+        cam.transform.position = Vector3.SmoothDamp(cam.transform.position, TargetCameraPosition(), ref cameraVelocity, 0.5f);
         cam.transform.LookAt(this.transform.position + playerOffset);
     }
 
-    Vector3 CalculateTargetCameraPosition ()
+    Vector3 TargetCameraPosition ()
     {
         // Get player-relative x and z camera position and the magnitude of that vector.
         relativeCameraPosition = cam.transform.position - (this.transform.position + playerOffset);
