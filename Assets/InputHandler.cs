@@ -3,12 +3,23 @@ using System.Collections;
 
 public class InputHandler : AriaBehaviour
 {
-    public bool moving = false;
+    private float touchDuration = 0;
     public Vector3 cameraRelativeDeltaPosition;
-    
+    public float touchSensitivity;
+    public float tapSpeed;
+    public bool move = false;
+    public bool tap = false;
+
     #region Input stuff.
 #if UNITY_EDITOR
-    Vector2 currentMousePosition, lastMousePosition, deltaMousePosition;
+    Vector2 originMousePosition;
+    Vector2 currentMousePosition;
+    Vector2 lastMousePosition;
+    Vector2 deltaMousePosition;
+#endif
+
+#if (UNITY_IPHONE || UNITY_ANDROID) && !UNITY_EDITOR
+    Vector2 originTouchPosition;
 #endif
     #endregion
 
@@ -19,46 +30,78 @@ public class InputHandler : AriaBehaviour
 
 	void Update ()
     {
-        moving = false;
         #region PC Input
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
-            RaycastHit hit;
-            if(Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
-            {
-                var entity = hit.collider.transform.GetComponent<Entity>();
-                if (entity)
-                {
-                    entity.health -= 50;
-                }
-            }
-
-            currentMousePosition = lastMousePosition = Input.mousePosition;
+            touchDuration = 0f;
+            originMousePosition = currentMousePosition = lastMousePosition = Input.mousePosition;
             deltaMousePosition = Vector2.zero;
         }
-        if (Input.GetMouseButton(0))
+        else if (Input.GetMouseButton(0))
         {
-            moving = true;
+            touchDuration += Time.deltaTime;
+
             currentMousePosition = Input.mousePosition;
             deltaMousePosition = currentMousePosition - lastMousePosition;
             lastMousePosition = currentMousePosition;
 
             cameraRelativeDeltaPosition = screenXY2CameraXZ(deltaMousePosition);
+
+            if(move == false && Vector2.Distance(currentMousePosition, originMousePosition) >= touchSensitivity)
+            {
+                move = true;
+            }
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            if(move == false && touchDuration <= tapSpeed)
+            {
+                tap = true;
+            }
+        }
+        else
+        {
+            tap = false;
+            move = false;
+            touchDuration = 0f;
         }
 #endif
         #endregion
 
         #region Mobile Input
-#if (UNITY_IPHONE || UNITY_ANDROID)
+#if (UNITY_IPHONE || UNITY_ANDROID) && !UNITY_EDITOR 
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Began)
+            {
+                touchDuration = 0f;
+                originTouchPosition = touch.position;
+            }
             if (touch.phase == TouchPhase.Moved)
             {
-                moving = true;
+                touchDuration += Time.deltaTime;
                 cameraRelativeDeltaPosition = screenXY2CameraXZ(touch.deltaPosition);
+
+                if (move == false && Vector2.Distance(touch.position, originTouchPosition) >= touchSensitivity)
+                {
+                    move = true;
+                }
             }
+            if (touch.phase == TouchPhase.Canceled || touch.phase == TouchPhase.Ended)
+            {
+                if (move == false && touchDuration <= tapSpeed)
+                {
+                    tap = true;
+                }
+            }
+        }
+        else
+        {
+            tap = false;
+            move = false;
+            touchDuration = 0f;
         }
 #endif
         #endregion

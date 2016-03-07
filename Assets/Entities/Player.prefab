@@ -4437,7 +4437,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   healthBarCanvas: {fileID: 0}
-  healthBarGUI: {fileID: 22409514, guid: a1b05ef7ed8f93c4faf7ad9f10575081, type: 2}
+  healthBarPrefab: {fileID: 22409514, guid: a1b05ef7ed8f93c4faf7ad9f10575081, type: 2}
   healthBarHeight: 2.5
   _health: 100
   maxHealth: 100

@@ -3,7 +3,7 @@ using System.Collections;
 
 public class GameController : AriaBehaviour
 {
-    public Entity player;
+    public HealthBar player;
 
 	void Start ()
     {

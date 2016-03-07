@@ -11,7 +11,7 @@ GameObject:
   - 135: {fileID: 13597648}
   - 54: {fileID: 5478906}
   - 114: {fileID: 11421274}
-  - 114: {fileID: 11491518}
+  - 114: {fileID: 11471136}
   m_Layer: 0
   m_Name: Slime
   m_TagString: Untagged
@@ -44,7 +44,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 110888}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 4.58}
+  m_LocalPosition: {x: 0, y: 0.66, z: 4.58}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 490682}
@@ -108,7 +108,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!95 &9527092
 Animator:
@@ -139,11 +139,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   healthBarCanvas: {fileID: 0}
-  healthBarGUI: {fileID: 22409514, guid: a1b05ef7ed8f93c4faf7ad9f10575081, type: 2}
+  healthBarPrefab: {fileID: 22409514, guid: a1b05ef7ed8f93c4faf7ad9f10575081, type: 2}
   healthBarHeight: 1.5
-  _health: 100
-  maxHealth: 100
---- !u!114 &11491518
+--- !u!114 &11471136
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -151,9 +149,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 110888}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8a9bd938490d2544bb5526cf8ee96a9, type: 3}
+  m_Script: {fileID: 11500000, guid: f683224af6473e74ea8b8efba24cd20d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentHealth: 100
+  maxHealth: 100
 --- !u!135 &13597648
 SphereCollider:
   m_ObjectHideFlags: 1
@@ -164,8 +164,8 @@ SphereCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0.5, z: 0}
+  m_Radius: 0.7
+  m_Center: {x: 0, y: 0.7, z: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

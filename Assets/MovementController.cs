@@ -52,7 +52,20 @@ public class MovementController : AriaBehaviour
 	
 	void Update ()
     {
-        if(input.moving)
+        if(input.tap)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            {
+                var targetData = hit.transform.GetComponent<CharacterData>() as IHealth;
+                if (hit.transform != this.transform && targetData != null)
+                {
+                    Debug.Log("Hit!");
+                    targetData.current -= 50;
+                }
+            }
+        }
+        else if (input.move)
         {
             playerOffset.x = playerOffset.x - input.cameraRelativeDeltaPosition.x;
             playerOffset.z = playerOffset.z - input.cameraRelativeDeltaPosition.z;
