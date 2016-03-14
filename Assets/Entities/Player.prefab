@@ -2071,8 +2071,8 @@ GameObject:
   - 136: {fileID: 13636036}
   - 114: {fileID: 11494426}
   - 114: {fileID: 11477304}
-  - 114: {fileID: 11428162}
-  - 114: {fileID: 11465206}
+  - 114: {fileID: 11461106}
+  - 114: {fileID: 11420514}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -4379,6 +4379,19 @@ MonoBehaviour:
   colliders: []
   debug: 1
   threshold: 0.01
+--- !u!114 &11420514
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 193288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f683224af6473e74ea8b8efba24cd20d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentHealth: 100
+  maxHealth: 100
 --- !u!114 &11422330
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4425,22 +4438,6 @@ MonoBehaviour:
   - {fileID: 11433018}
   debug: 1
   threshold: 0.01
---- !u!114 &11428162
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 193288}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0829771fffc9f884e8d82bba0873007f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  healthBarCanvas: {fileID: 0}
-  healthBarPrefab: {fileID: 22409514, guid: a1b05ef7ed8f93c4faf7ad9f10575081, type: 2}
-  healthBarHeight: 2.5
-  _health: 100
-  maxHealth: 100
 --- !u!114 &11428440
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4596,6 +4593,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   radius: 0.05
+--- !u!114 &11461106
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 193288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0829771fffc9f884e8d82bba0873007f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  healthBarCanvas: {fileID: 0}
+  healthBarPrefab: {fileID: 22409514, guid: a1b05ef7ed8f93c4faf7ad9f10575081, type: 2}
+  healthBarHeight: 2.5
 --- !u!114 &11463260
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4665,17 +4676,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   radius: 0.1
---- !u!114 &11465206
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 193288}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62b4e27bad6ae434486d447fbec2ae9c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11467328
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4984,8 +4984,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: acd1bc585803b164a8354f9608beaed5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moving: 0
   cameraRelativeDeltaPosition: {x: 0, y: 0, z: 0}
+  touchSensitivity: 25
+  tapSpeed: 0.2
+  move: 0
+  tap: 0
 --- !u!114 &11497392
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -5044,7 +5047,7 @@ Projector:
   m_Enabled: 1
   serializedVersion: 2
   m_NearClipPlane: 0.1
-  m_FarClipPlane: 2.5
+  m_FarClipPlane: 5
   m_FieldOfView: 60
   m_AspectRatio: 1
   m_Orthographic: 1
