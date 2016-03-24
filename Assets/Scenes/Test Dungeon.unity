@@ -515,7 +515,7 @@ GameObject:
   - 114: {fileID: 712219483}
   - 114: {fileID: 712219486}
   m_Layer: 5
-  m_Name: Button
+  m_Name: Reload Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -579,7 +579,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 712219486}
-        m_MethodName: ReloadLevel
+        m_MethodName: LoadScene
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -635,6 +635,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33310eba0c471914bb58c8b7c16898c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sceneNumber: 0
 --- !u!1 &1006153327
 GameObject:
   m_ObjectHideFlags: 0
