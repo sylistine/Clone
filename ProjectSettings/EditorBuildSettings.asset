@@ -6,4 +6,4 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Dev/Movement/Inventory GUI Prefab.unity
+    path: Assets/Scenes/Test Dungeon.unity
